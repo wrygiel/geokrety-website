@@ -221,37 +221,32 @@ define('CONFIG_USERNAME', $config['username']);
 define('CONFIG_PASS', $config['pass']);
 define('CONFIG_DB', $config['db']);
 define('CONFIG_CHARSET', $config['charset']);
+define('CONFIG_TIMEZONE', $config['timezone']);
+
+// TODO // STATE FOR prevent WARNING
+// Keep only fatal, no more warning
+// error_reporting(E_ERROR | E_PARSE);
 
 if (!function_exists('DBPConnect')) {
+    /**
+     * Function used by geokrety-scripts.
+     *
+     * @deprecated : please use GKDB or DBConnect()
+     *
+     * @return geokrety database link
+     */
     function DBPConnect() {
-        $link = mysqli_connect(constant('CONFIG_HOST'), constant('CONFIG_USERNAME'), constant('CONFIG_PASS'));
-        if (!$link) {
-            $link = mysqli_connect(constant('CONFIG_HOST'), constant('CONFIG_USERNAME'), constant('CONFIG_PASS'));
-            if (!$link) {
-                die('DB ERROR: '.mysqli_errno($link));
-            }
-        }
-        $link->set_charset(constant('CONFIG_CHARSET'));
-        mysqli_select_db($link, constant('CONFIG_DB')) or die('DB ERROR: '.mysqli_errno($link));
-        $link->query("SET time_zone = '".$config['timezone']."'");
-
-        return $link;
+        return GKDB::getLink();
     }
 }
-
 if (!function_exists('DBConnect')) {
+    /**
+     * Shortcut function that rely on GKDB singleton.
+     *
+     * @return geokrety database link
+     */
     function DBConnect() {
-        $link = mysqli_connect(constant('CONFIG_HOST'), constant('CONFIG_USERNAME'), constant('CONFIG_PASS'), constant('CONFIG_DB'));
-        if (!$link) {
-            $link = mysqli_connect(constant('CONFIG_HOST'), constant('CONFIG_USERNAME'), constant('CONFIG_PASS'), constant('CONFIG_DB'));
-            if (!$link) {
-                die('DB ERROR: '.mysqli_errno($link));
-            }
-        }
-        $link->set_charset(constant('CONFIG_CHARSET'));
-        $link->query("SET time_zone = '".$config['timezone']."'");
-
-        return $link;
+        return GKDB::getLink();
     }
 }
 
@@ -277,4 +272,4 @@ define('PIWIK_TOKEN', $config['piwik_token']);
 // Partners
 define('GEOCACHING_CACHE_WP', $config['geocaching_cache_wp']);
 
-date_default_timezone_set($config['timezone']);
+date_default_timezone_set(CONFIG_TIMEZONE);
