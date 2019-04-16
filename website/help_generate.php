@@ -7,6 +7,7 @@ require_once '__sentry.php';
 // smarty cache -- above this declaration should be wybierz_jezyk.php!
 $smarty_cache_this_page = 0; // this page should be cached for n seconds
 require_once 'smarty_start.php';
+require_once 'theme.php';
 $TYTUL = _('Help');
 
 $HEAD .= '<style type="text/css">.logtypes TD{padding:5px; vertical-align: middle; border-bottom: 1px solid #ccc}
@@ -18,7 +19,9 @@ if (!in_array($jezyk, ['en', 'cz', 'de', 'fr', 'hu', 'pl', 'ru', 'sk', 'it'])) {
     die;
 }
 
-$TRESC = file_get_contents("help/$jezyk/help.html");
+$helpFilename = "help/$jezyk/help.html";
+
+$TRESC = file_get_contents($helpFilename);
 
 $socialGroups = new \Geokrety\View\SocialGroups($config['gk_social_groups']);
 
@@ -26,6 +29,7 @@ $groupsTable = $socialGroups->toHtmlTable();
 
 // replace #GK_SOCIAL_GROUPS# with table of social groups
 $TRESC = str_replace('#GK_SOCIAL_GROUPS#', "$groupsTable", $TRESC);
+$TRESC .= getTheme();
 
 // --------------------------------------------------------------- SMARTY ---------------------------------------- //
 // ----------------------------------------------JSON-LD---------------------------
@@ -42,7 +46,7 @@ $helpLang = $jezyk;
 if ($jezyk == 'cz') {
     $helpLang = 'cs'; // LD-JSON requires ISO-639 value
 }
-$helpLastUpdate = filemtime(__FILE__);
+$helpLastUpdate = filemtime($helpFilename);
 $helpMainEntityOf = $config['adres'];
 
 $ldHelper = new LDHelper($gkName, $gkUrl, $gkLogoUrl);
