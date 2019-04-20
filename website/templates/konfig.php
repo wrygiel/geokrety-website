@@ -116,6 +116,13 @@ define('CONFIG_CDN_JS', $config['cdn_js']);
 define('CONFIG_CDN_CSS', $config['cdn_css']);
 define('CONFIG_CDN_MAPS', $config['cdn_maps']);
 
+define('CONFIG_PROMETHEUS', 'http://'.$config['prod_server_name'].':9090');
+define('CONFIG_PUSH_GATEWAY', 'http://'.$config['prod_server_name'].':9091');
+define('CONFIG_GRAFANA', 'http://'.$config['prod_server_name'].':3000');
+define('CONFIG_PUSH_GATEWAY_ALIAS', 'pushgateway:9091'); // docker service name
+
+
+
 //js
 $config['funkcje.js'] = '/funkcje.js';
 $config['ajaxtooltip.js'] = CONFIG_CDN_LIBRARIES.'/ajaxtooltip/ajaxtooltip-1.min.js';
