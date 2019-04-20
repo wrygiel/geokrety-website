@@ -62,7 +62,7 @@ gkShell is based onto following config:
   They are embedded into geokrety image (when building using `gk build`).
 
 **Mariadb sql files** are automatically retrieved from `docker/mariadb`.
-  They are used to create geokrety database schema, initial data at `dbGeokrety` startup.
+  They are used to create geokrety database schema, initial data at `geokrety_db` startup.
 
 **Website configs files** are automatically retrieved from templates located in `configs/`
 

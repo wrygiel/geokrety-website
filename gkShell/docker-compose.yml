@@ -4,7 +4,7 @@ services:
     # keep 'db' as service name to match adminer default hostname
     db:
         image: mariadb:10.3
-        container_name: dbGeokrety
+        container_name: geokrety_db
         ports:
             - 3306:3306
         volumes:
@@ -17,18 +17,59 @@ services:
 ## database administration service
     adminer:
         image: adminer:4.6.2
-        container_name: adminer
+        container_name: geokrety_adminer
         ports:
             - 8880:8080
         restart: unless-stopped
         depends_on:
             - db
 
+    pushgateway:
+        image: prom/pushgateway
+        container_name: geokrety_pushgateway
+        ports:
+            - 9091:9091
+
+    prometheus:
+        image: prom/prometheus:v2.9.2
+        container_name: geokrety_prometheus
+        volumes:
+        - /gkConfig/prometheus/prometheus-template.yml:/etc/prometheus/prometheus-template.yml
+        - /gkConfig/prometheus/setup.sh:/setup.sh
+#        - /gkConfig/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+        entrypoint: /setup.sh
+        environment:
+        - PROMETHEUS_SCRAPE_INTERVAL=${PROMETHEUS_SCRAPE_INTERVAL:-15}
+        - PROMETHEUS_EVALUATION_INTERVAL=${PROMETHEUS_EVALUATION_INTERVAL:-15}
+        - PROMETHEUS_WEBSITE_SCRAPE_INTERVAL=${PROMETHEUS_WEBSITE_SCRAPE_INTERVAL:-5}
+        - PUSHGATEWAY_HOST_PORT_ALIAS=${PUSHGATEWAY_HOST_PORT_ALIAS:-pushgateway:9091}
+        restart: unless-stopped
+        ports:
+        - "9090:9090"
+
+    grafana:
+        image: grafana/grafana:4.6.3
+        container_name: geokrety_grafana
+        volumes:
+        - /gkConfig/grafana/datasources:/etc/grafana/datasources
+        - /gkConfig/grafana/dashboards:/etc/grafana/dashboards
+        - /gkConfig/grafana/setup.sh:/setup.sh
+        entrypoint: /setup.sh
+        environment:
+        - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+        - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+        - GF_USERS_ALLOW_SIGN_UP=false
+        restart: unless-stopped
+        ports:
+        - "3000:3000"
+# TODO?        networks:
+# TODO?        - geokrety_tools
+
 ## geokrety service
     geokrety:
         # following line causes docker-compose to build image using ./Dockerfile
         image: geokrety:v0
-        container_name: devGeokrety
+        container_name: geokrety_application
         ports:
             - 80:80
         volumes:
@@ -38,5 +79,7 @@ services:
         environment:
             - website_config_directory=/var/www/config
             - MYSQL_ROOT_PASSWORD
+            - PROD_SERVER_NAME=gk
+            - PROMETHEUS_WEBSITE_SCRAPE_INTERVAL=${PROMETHEUS_WEBSITE_SCRAPE_INTERVAL:-5}
         depends_on:
             - db
