@@ -4,7 +4,7 @@ services:
     # keep 'db' as service name to match adminer default hostname
     db:
         image: mariadb:10.3
-        container_name: dbGeokrety
+        container_name: geokrety_db
         ports:
             - 3306:3306
         volumes:
@@ -17,18 +17,58 @@ services:
 ## database administration service
     adminer:
         image: adminer:4.6.2
-        container_name: adminer
+        container_name: geokrety_adminer
         ports:
             - 8880:8080
         restart: unless-stopped
         depends_on:
             - db
 
+    pushgateway:
+        image: prom/pushgateway
+        container_name: geokrety_pushgateway
+        ports:
+            - 9091:9091
+
+    prometheus:
+        image: prom/prometheus:v2.2.0-rc.0
+        container_name: geokrety_prometheus
+        volumes:
+        - /gkConfig/prometheus/:/etc/prometheus/
+        command:
+        - '--config.file=/etc/prometheus/prometheus.yml'
+        - '--storage.tsdb.path=/prometheus'
+        - '--web.console.libraries=/etc/prometheus/console_libraries'
+        - '--web.console.templates=/etc/prometheus/consoles'
+        - '--storage.tsdb.retention=200h'
+        - '--web.enable-lifecycle'
+        restart: unless-stopped
+        ports:
+        - "9090:9090"
+
+    grafana:
+        image: grafana/grafana:4.6.3
+        container_name: geokrety_grafana
+        volumes:
+        - /gkConfig/grafana/datasources:/etc/grafana/datasources
+        - /gkConfig/grafana/dashboards:/etc/grafana/dashboards
+        - /gkConfig/grafana/setup.sh:/setup.sh
+        entrypoint: /setup.sh
+        environment:
+        - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+        - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+        - GF_USERS_ALLOW_SIGN_UP=false
+        restart: unless-stopped
+        ports:
+        - "3000:3000"
+# TODO?        networks:
+# TODO?        - geokrety_tools
+
 ## geokrety service
     geokrety:
         # following line causes docker-compose to build image using ./Dockerfile
         image: geokrety:v0
-        container_name: devGeokrety
+        container_name: geokrety_application
         ports:
             - 80:80
         volumes:
@@ -38,5 +78,6 @@ services:
         environment:
             - website_config_directory=/var/www/config
             - MYSQL_ROOT_PASSWORD
+            - PROD_SERVER_NAME=gk
         depends_on:
             - db

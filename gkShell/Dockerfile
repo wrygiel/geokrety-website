@@ -2,5 +2,5 @@ ARG BASE_IMAGE=geokrety/website-legacy-base
 ARG BASE_TAG=latest
 FROM ${BASE_IMAGE}:${BASE_TAG}
 
-## TODO VOLUME
-## to use it without docker-compose : docker run -it --rm --name geokrety -p 80:80 -v $(pwd)/website:/var/www/html/ geokrety
+# Add extension to develop // TODO // marche pas .?
+RUN apt-get update && apt-get install -y  cron

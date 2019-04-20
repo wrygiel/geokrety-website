@@ -21,6 +21,7 @@ $TRESC = '
     <li><a href="_zmien_ownera_geokreta.php">'._('Change geokrety ownership').'</a> (beta)</li>
     <li><a href="poprawki.php">'._('Amendments').'</a></li>
     <li><a href="errory.php">'._('Errors and logs').'</a></li>
+    <li><a href="'.CONFIG_GRAFANA.'">'._('Grafana monitoring').'</a> <small>< <a href="'.CONFIG_PROMETHEUS.'">'._('prometheus').'</a> < <a href="'.CONFIG_PUSH_GATEWAY.'">'._('push gateway').'</a></small></li>
 </ul>
 ';
 
