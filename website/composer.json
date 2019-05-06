@@ -7,11 +7,7 @@
   "require": {
     "torann/json-ld": "^0.0",
     "google/recaptcha": "^1.2",
-    "jimdo/prometheus_client_php": "^0.9.1",
-    "predis/predis": "^1.1",
-    "php-http/curl-client": "^1.7",
-    "guzzlehttp/psr7": "^1.5",
-    "php-http/message": "^1.7"
+    "jimdo/prometheus_client_php": "^0.9.1"
   },
   "autoload": {
     "classmap": [

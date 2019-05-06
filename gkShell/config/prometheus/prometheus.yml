@@ -15,7 +15,7 @@ scrape_configs:
 
   - job_name: 'website'
     metrics_path: '/rest/internal/prometheus/metrics.php'
-    scrape_interval: 15s
+    scrape_interval: 5s
     static_configs:
     - targets: ['geokrety']
 
