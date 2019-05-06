@@ -28,9 +28,9 @@ class MetricsPublisher {
         $this->registry = new CollectorRegistry(new InMemory());
 
         //~ ## health metric
-        $curTime = date("Y-m-d H:i:s");
+        $nowMillisec = gettimeofday()["sec"];
         $healthGauge = $this->registry->registerGauge($this->namespace, "healthGauge", "metric visual health check", []);
-        $healthGauge->set($curTime, []);
+        $healthGauge->set($nowMillisec, []);
 
         //~ ## errory metric
         $name = "errory";
@@ -43,7 +43,7 @@ class MetricsPublisher {
             FROM (
                         SELECT id, uid, severity
                         FROM `gk-errory`
-                        WHERE timestamp > NOW() - INTERVAL $this->gatewayScrapIntervalSeconds SECOND
+                        WHERE timestamp >= NOW() - INTERVAL $this->gatewayScrapIntervalSeconds SECOND
                   UNION
                         SELECT DISTINCT NULL, uid, severity FROM `gk-errory`
              ) ee

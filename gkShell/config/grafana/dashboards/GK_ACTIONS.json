@@ -45,7 +45,9 @@
             "rightSide": true,
             "show": true,
             "sideWidth": 400,
-            "total": false,
+            "sort": "max",
+            "sortDesc": true,
+            "total": true,
             "values": true
           },
           "lines": true,
@@ -63,9 +65,9 @@
           "steppedLine": true,
           "targets": [
             {
-              "expr": "geokrety_errory{job='MetricsPublisher', severity='0'}",
+              "expr": "geokrety_errory{severity='0'}",
               "format": "time_series",
-              "intervalFactor": 2,
+              "intervalFactor": 1,
               "legendFormat": "{{action}} (s:{{severity}})",
               "refId": "A"
             }
@@ -139,7 +141,9 @@
             "rightSide": true,
             "show": true,
             "sideWidth": 400,
-            "total": false,
+            "sort": "max",
+            "sortDesc": true,
+            "total": true,
             "values": true
           },
           "lines": true,
@@ -157,9 +161,9 @@
           "steppedLine": true,
           "targets": [
             {
-              "expr": "geokrety_errory{job='MetricsPublisher', severity!='0'}",
+              "expr": "geokrety_errory{severity!='0'}",
               "format": "time_series",
-              "intervalFactor": 2,
+              "intervalFactor": 1,
               "legendFormat": "{{action}} (s:{{severity}})",
               "refId": "A"
             }
@@ -251,9 +255,9 @@
           "steppedLine": true,
           "targets": [
             {
-              "expr": "geokrety_healthGauge{job='MetricsPublisher'}",
+              "expr": "geokrety_healthGauge",
               "format": "time_series",
-              "intervalFactor": 2,
+              "intervalFactor": 1,
               "legendFormat": "healthGauge from {{instance}}",
               "refId": "A"
             }
@@ -278,7 +282,7 @@
           },
           "yaxes": [
             {
-              "format": "ppm",
+              "format": "short",
               "label": null,
               "logBase": 1,
               "max": null,
@@ -341,5 +345,5 @@
   },
   "timezone": "",
   "title": "GK_ACTIONS",
-  "version": 3
+  "version": 2
 }
