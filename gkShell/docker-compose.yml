@@ -31,17 +31,18 @@ services:
             - 9091:9091
 
     prometheus:
-        image: prom/prometheus:v2.2.0-rc.0
+        image: prom/prometheus:v2.9.2
         container_name: geokrety_prometheus
         volumes:
-        - /gkConfig/prometheus/:/etc/prometheus/
-        command:
-        - '--config.file=/etc/prometheus/prometheus.yml'
-        - '--storage.tsdb.path=/prometheus'
-        - '--web.console.libraries=/etc/prometheus/console_libraries'
-        - '--web.console.templates=/etc/prometheus/consoles'
-        - '--storage.tsdb.retention=200h'
-        - '--web.enable-lifecycle'
+        - /gkConfig/prometheus/prometheus-template.yml:/etc/prometheus/prometheus-template.yml
+        - /gkConfig/prometheus/setup.sh:/setup.sh
+#        - /gkConfig/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+        entrypoint: /setup.sh
+        environment:
+        - PROMETHEUS_SCRAPE_INTERVAL=${PROMETHEUS_SCRAPE_INTERVAL:-15}
+        - PROMETHEUS_EVALUATION_INTERVAL=${PROMETHEUS_EVALUATION_INTERVAL:-15}
+        - PROMETHEUS_WEBSITE_SCRAPE_INTERVAL=${PROMETHEUS_WEBSITE_SCRAPE_INTERVAL:-5}
+        - PUSHGATEWAY_HOST_PORT_ALIAS=${PUSHGATEWAY_HOST_PORT_ALIAS:-pushgateway:9091}
         restart: unless-stopped
         ports:
         - "9090:9090"
@@ -79,5 +80,6 @@ services:
             - website_config_directory=/var/www/config
             - MYSQL_ROOT_PASSWORD
             - PROD_SERVER_NAME=gk
+            - PROMETHEUS_WEBSITE_SCRAPE_INTERVAL=${PROMETHEUS_WEBSITE_SCRAPE_INTERVAL:-5}
         depends_on:
             - db

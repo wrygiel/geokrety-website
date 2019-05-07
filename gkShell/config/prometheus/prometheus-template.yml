@@ -1,0 +1,27 @@
+global:
+  scrape_interval:     ((prometheus_scrape_interval))s
+  evaluation_interval: ((prometheus_evaluation_interval))s
+
+# A scrape configuration containing exactly one endpoint to scrape.
+scrape_configs:
+
+# useless for now - using rest endoint directly
+# uncomment action: change scrape_interval
+#  - job_name: 'pushgateway'
+#     metrics_path: '/metrics'
+#     honor_labels: true
+#     scrape_interval: 500s
+#     static_configs:
+#       - targets: ['((pushgateway_host_port_alias))']
+#
+  - job_name: 'website'
+    metrics_path: '/rest/internal/prometheus/metrics.php'
+    scrape_interval: ((prometheus_website_scrape_interval))s
+    static_configs:
+    - targets: ['geokrety']
+
+# TODO add database metrics
+# exporter to configure and use: https://hub.docker.com/r/prom/mysqld-exporter/
+#  - job_name: 'mariadb'
+#    static_configs:
+#      - targets: ['xxxxExporter:9001']
