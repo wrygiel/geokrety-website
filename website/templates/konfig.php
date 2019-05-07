@@ -116,6 +116,9 @@ define('CONFIG_CDN_JS', $config['cdn_js']);
 define('CONFIG_CDN_CSS', $config['cdn_css']);
 define('CONFIG_CDN_MAPS', $config['cdn_maps']);
 
+# WIP WIP WIP BRICE
+define('PROMETHEUS_WEBSITE_SCRAPE_INTERVAL', isset($_ENV['PROMETHEUS_WEBSITE_SCRAPE_INTERVAL']) ? $_ENV['PROMETHEUS_WEBSITE_SCRAPE_INTERVAL'] : null);
+
 define('CONFIG_PROMETHEUS', 'http://'.$config['prod_server_name'].':9090');
 define('CONFIG_PUSH_GATEWAY', 'http://'.$config['prod_server_name'].':9091');
 define('CONFIG_GRAFANA', 'http://'.$config['prod_server_name'].':3000');
