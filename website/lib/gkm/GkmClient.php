@@ -3,28 +3,32 @@
 namespace Gkm;
 
 
-use Gkm\Domain\RestResponse;
+use Gkm\Domain\GeoKrety;
+use Gkm\Domain\GeokretyNotFoundException;
 use GuzzleHttp; // http://docs.guzzlephp.org/en/stable/
 use GuzzleHttp\Psr7; // https://packagist.org/packages/guzzlehttp/psr7
+use GuzzleHttp\Exception\ClientException; //  thrown for 400 level errors (cf quickstart)
 
 /**
  * GkmClient : GKM API Client
  */
 class GkmClient {
     private $gkmApiEndpoint;
+    private $client;
 
     public function __construct($gkmApiEndpoint = 'https://api.geokretymap.org') {
         $this->gkmApiEndpoint = $gkmApiEndpoint;
+        $this->client = new GuzzleHttp\Client();
     }
 
     public function getBasicGeokretyById($geokretyId) {
-        $client = new GuzzleHttp\Client();
-        return $client->request('GET', $this->gkmApiEndpoint.'/gk/'.$geokretyId);
+        $response = $this->getGeokrety($this->gkmApiEndpoint.'/gk/'.$geokretyId);
+        $geokrety = new GeoKrety($response->getBody());
+        return $response;
     }
 
     public function getFullGeokretyById($geokretyId) {
-        $client = new GuzzleHttp\Client();
-        return $client->request('GET', $this->gkmApiEndpoint.'/gk/'.$geokretyId.'/details');
+        return $this->getGeokrety($this->gkmApiEndpoint.'/gk/'.$geokretyId.'/details');
     }
 
     public function debugShowResponse($description, $response) {
@@ -41,5 +45,16 @@ class GkmClient {
         $statusCode = $response->getStatusCode();
         $phrase= $response->getReasonPhrase();
         return "<pre>\n$description ($statusCode - $contentType): $phrase\n</pre>";
+    }
+
+    private function getGeokrety($url) {
+        try {
+            return $this->client->request('GET', $url);
+        } catch (ClientException $clientException) {
+            if ($clientException->getResponse()->getStatusCode() == 404) {
+                throw new GeokretyNotFoundException();
+            }
+            throw $clientException;
+        }
     }
 }
