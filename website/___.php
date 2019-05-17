@@ -1,4 +1,33 @@
-TODO List:<br/>
+<?php
+
+require_once '__sentry.php';
+
+use Gkm\Gkm;
+use Gkm\GkmClient;
+use Gkm\Domain\GeokretyNotFoundException;
+
+$cgeoProbeGeokretyId = 46464;
+$anotherGeokretyId = 69469;
+$unknownGeokretyId = 145454545454545;
+
+$gkmClient = new GkmClient();
+$gkm = new Gkm();
+
+$geokrets = [$anotherGeokretyId, $unknownGeokretyId];
+$geokrets = [$cgeoProbeGeokretyId, $unknownGeokretyId];
+
+
+function objectToHtml($var) {
+   $rep = print_r($var, true);
+   return '<pre>' . htmlentities($rep) . '</pre>';
+}
+
+?>
+<div style="float:right">
+ <a href="#Todo">Todo</a> - <a href="#GkmClient">GkmClient</a>  - <a href="#Gkm">Gkm</a>
+</div>
+
+<h2>Todo</h2>
 <ul>
  <li>create unit tests (mock http client?)</li>
  <li>create integration tests : env var to enable them</li>
@@ -9,24 +38,14 @@ TODO List:<br/>
  <li>create another job that take this entries to trigger gkm/.../dirty api cf issue #324
 </ul>
 
+
+
+
+<h2>GkmClient</h2>
 <?php
 
-require_once '__sentry.php';
-
-use Gkm\GkmClient;
-use Gkm\Domain\GeokretyNotFoundException;
-
-
-$cgeoProbeGeokretyId = 46464;
-$unknownGeokretyId = 145454545454545;
-
-$gkmClient = new \Gkm\GkmClient();
-
-$geokrets = [$cgeoProbeGeokretyId, $unknownGeokretyId];
-
 foreach ($geokrets as &$geokretyId) {
-    echo $geokretyId;
-    $action = "getBasicGeokretyById($geokretyId)";
+    $action = "<h4>getBasicGeokretyById($geokretyId)</h6>";
     try {
         $response = $gkmClient->getBasicGeokretyById($geokretyId);
         echo $gkmClient->debugShowResponse($action, $response);
@@ -35,15 +54,26 @@ foreach ($geokrets as &$geokretyId) {
     } catch (ClientException $clientException) {
         echo $gkmClient->debugShowExceptionResponse($action, $clientException);
     }
-
-    $action = "getFullGeokretyById($geokretyId)";
+    $action = "<h4>getFullGeokretyById($geokretyId)</h6>";
     try {
         $response = $gkmClient->getFullGeokretyById($geokretyId);
         echo $gkmClient->debugShowResponse($action, $response);
-    } catch (GeokretyNotFoundException $notFoundException) {
-        echo "$action: not found";
-    } catch (ClientException $clientException) {
+    } catch (GuzzleHttp\Exception\ClientException $clientException) {
         echo $gkmClient->debugShowExceptionResponse($action, $clientException);
     }
 }
 
+?>
+
+<h2>Gkm</h2>
+<?php
+
+foreach ($geokrets as &$geokretyId) {
+    echo "<h4>getGeokretyById($geokretyId)</h4>";
+    try {
+        $geokrety = $gkm->getGeokretyById($geokretyId);
+        echo objectToHtml($geokrety);
+    } catch (GeokretyNotFoundException $notFoundException) {
+        echo "geokrety not found";
+    }
+}

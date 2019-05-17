@@ -22,13 +22,11 @@ class GkmClient {
     }
 
     public function getBasicGeokretyById($geokretyId) {
-        $response = $this->getGeokrety($this->gkmApiEndpoint.'/gk/'.$geokretyId);
-        $geokrety = new GeoKrety($response->getBody());
-        return $response;
+        return $this->get($this->gkmApiEndpoint.'/gk/'.$geokretyId);
     }
 
     public function getFullGeokretyById($geokretyId) {
-        return $this->getGeokrety($this->gkmApiEndpoint.'/gk/'.$geokretyId.'/details');
+        return $this->get($this->gkmApiEndpoint.'/gk/'.$geokretyId.'/details');
     }
 
     public function debugShowResponse($description, $response) {
@@ -47,14 +45,8 @@ class GkmClient {
         return "<pre>\n$description ($statusCode - $contentType): $phrase\n</pre>";
     }
 
-    private function getGeokrety($url) {
-        try {
-            return $this->client->request('GET', $url);
-        } catch (ClientException $clientException) {
-            if ($clientException->getResponse()->getStatusCode() == 404) {
-                throw new GeokretyNotFoundException();
-            }
-            throw $clientException;
-        }
+    private function get($url) {
+        // DEBUG // echo "GET : $url <br/>";
+        return $this->client->request('GET', $url);
     }
 }

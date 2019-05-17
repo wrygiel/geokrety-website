@@ -5,7 +5,7 @@
     }
   },
   "require": {
-    "torann/json-ld": "^0.0",
+    "torann/json-ld": "0.0.14",
     "google/recaptcha": "^1.2",
     "jimdo/prometheus_client_php": "^0.9.1",
     "guzzlehttp/psr7": "^1.5"

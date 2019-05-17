@@ -223,6 +223,7 @@ command-composer() {
   computedParams
   command -v composer 2>/dev/null 1>&2 || { composerInstall; exit 1;}
   learnAndLaunch "cd website/ && composer install && cd .. && composer install"
+  echo "to enforce a composer install from scratch, remove composer.lock and website/composer.lock and re-run 'gk composer'"
 }
 command-help-install() {
  echo "to mount share folder between docker default machine and your workstation"
