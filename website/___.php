@@ -6,6 +6,8 @@ use Gkm\Gkm;
 use Gkm\GkmClient;
 use Gkm\Domain\GeokretyNotFoundException;
 
+use Consistency\GkmConsistencyCheck;
+
 $cgeoProbeGeokretyId = 46464;
 $anotherGeokretyId = 69469;
 $unknownGeokretyId = 145454545454545;
@@ -27,20 +29,35 @@ function objectToHtml($var) {
  <a href="#Todo">Todo</a> - <a href="#GkmClient">GkmClient</a>  - <a href="#Gkm">Gkm</a>
 </div>
 
-<h2>Todo</h2>
+<h2>Done tasks</h2>
 <ul>
- <li>spec - https://github.com/geokrety/geokrety-website/wiki/Study-GKMConsistencyDesign </li>
- <li>DONE - create unit tests (mock http client?)</li>
- <li>create integration tests : env var to enable them</li>
- <li>DONE move GkmClient into a create dedicated repository : https://github.com/GeoKretyMap/php-client</li>
+ <li>initiate GkmClient into a create dedicated repository : https://github.com/GeoKretyMap/php-client</li>
+ <li>create unit tests (mock http client?)</li>
+</ul>
+
+<h2>Todo or pending tasks</h2>
+<ul>
+ <li>WIP - specifications, cf wiki page <a href="https://github.com/geokrety/geokrety-website/wiki/Study-GKMConsistencyDesign">Study-GKMConsistencyDesign</a></li>
+ <li>first version that compare geokrety sync</li>
  <li>use home-made template to define fields to use as comparator</li>
- <li>first version append to a file geokrety that are not sync</li>
- <li>improved version that append to a redis queue or database geokrety that are not sync</li>
- <li>create another job that take this entries to trigger gkm/.../dirty api cf issue #324
 </ul>
 
 
 
+<h2>GKMConsistencyCheck</h2>
+<?php
+
+
+$gkmConfig = [];
+// $gkmConfig[GkmConsistencyCheck::CONFIG_API_ENDPOINT] = 'https://api.geokretymap.org';
+
+$consistencyCheck = new GkmConsistencyCheck($gkmConfig);
+$runResult = $consistencyCheck->run();
+
+echo objectToHtml($runResult);
+
+
+?>
 <h2>GkmClient</h2>
 <?php
 
