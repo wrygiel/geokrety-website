@@ -5,14 +5,18 @@ namespace Consistency;
 // src : https://stackoverflow.com/questions/535020/tracking-the-script-execution-time-in-php
 class ExecutionTime {
      private $startTime;
+     private $startMicroTime;
      private $endTime;
+     private $endMicroTime;
 
      public function start(){
          $this->startTime = getrusage();
+         $this->startMicroTime = microtime(true);
      }
 
      public function end(){
          $this->endTime = getrusage();
+         $this->endMicroTime = microtime(true);
      }
 
      private function runTime($ru, $rus, $index) {
@@ -21,8 +25,10 @@ class ExecutionTime {
      }
 
      public function __toString(){
+         $diff = $this->endMicroTime - $this->startMicroTime;
          return "This process used " . $this->runTime($this->endTime, $this->startTime, "utime") .
         " ms for its computations\nIt spent " . $this->runTime($this->endTime, $this->startTime, "stime") .
-        " ms in system calls\n";
+        " ms in system calls<br/>\n" .
+        " execution time $diff seconds";
      }
  }
