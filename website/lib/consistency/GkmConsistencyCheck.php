@@ -25,21 +25,39 @@ class GkmConsistencyCheck {
     }
 
     public function run() {
+        $runExecutionTime = new ExecutionTime();
+        $runExecutionTime->start();
+
         $executionTime = new ExecutionTime();
-        $executionTime->start();
 
-        $geokrets = $this->collectNextGeokretyToSync();
-        $geokretsCount = count($geokrets);
+        $batchSize = 50;
+        $batchCount = 10;
 
-        $gkmGeokrets = $this->collectGKMGeokrety($geokrets);
-        $gkmGeokretsCount = count($gkmGeokrets);
+        for ($i=0;$i<$batchCount;$i++) {
 
-        $executionTime->end();
-        echo "$geokretsCount geokrets, $gkmGeokretsCount gkmGeokrets results " . $executionTime;
-        return $gkmGeokrets;
+            $executionTime->start();
+            $geokrets = $this->collectNextGeokretyToSync($batchSize);
+            $geokretsCount = count($geokrets);
+            $executionTime->end();
+
+            echo "$i ) $geokretsCount geokrets<br/>" . $executionTime;
+
+            $executionTime->start();
+            $gkmGeokrets = $this->collectGKMGeokretyBulk($geokrets);
+            $gkmGeokretsCount = count($gkmGeokrets);
+            $executionTime->end();
+
+            echo "$i ) $gkmGeokretsCount gkmGeokrets (Bulk)<br/>" . $executionTime;
+            echo "-<br/>\n";
+
+            // DEBUG // echo $this->objectToHtml($gkmGeokrets);
+        }
+        $runExecutionTime->end();
+        echo "---<br/>\n";
+        echo "TOTAL) $batchSize x $batchCount geokrety<br/>" . $runExecutionTime;
     }
 
-    private function collectNextGeokretyToSync($batchSize = 30) { // 30 SOMETIME OK // 50 RESULT IN 503
+    private function collectNextGeokretyToSync($batchSize = 50) { // 30 SOMETIME OK // 50 RESULT IN 503
         $link = GKDB::getLink();
 $sql = <<<EOQUERY
         SELECT    `id`,`nr`,`nazwa`,`owner`
@@ -69,7 +87,7 @@ EOQUERY;
 
         while ($stmt->fetch()) {
             $geokret = [];
-            echo "$gkId<br/>\n";
+            // DEBUG // echo "$gkId<br/>\n";
             $geokret["id"] = $gkId;
             $geokret["nr"] = $nr;
             $geokret["nazwa"] = $nazwa;
@@ -88,9 +106,9 @@ EOQUERY;
         }
     }
 
-    private function collectGKMGeokrety($geokrets = []) {
+    private function collectGKMGeokretyOneByOne($geokrets = []) {
         $gkmGeokrets = [];
-        foreach ($geokrets as $geokrety){
+        foreach ($geokrets as $geokrety ) {
             $gkId = $geokrety["id"];
             // DEBUG //  echo $gkId."<br/>\n";
             try {
@@ -103,7 +121,23 @@ EOQUERY;
         return $gkmGeokrets;
     }
 
+    private function collectGKMGeokretyBulk($geokrets = []) {
+        $gkmGeokrets = [];
+        $idsOnly = [];
+        foreach ($geokrets as $geokrety ) {
+            array_push($idsOnly, $geokrety["id"]);
+        }
+        return $geokrety = $this->gkm->getGeokretyByIds($idsOnly);
+    }
+
     private function logMissingGkm($geokretyId) {
       echo "missing geokrety id=$geokretyId on GKM side<br/>\n";
     }
+
+
+    private function objectToHtml($var) {
+       $rep = print_r($var, true);
+       return '<pre>' . htmlentities($rep) . '</pre>';
+    }
+
 }

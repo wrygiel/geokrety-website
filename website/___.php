@@ -25,17 +25,18 @@ function objectToHtml($var) {
 }
 
 ?>
+
 <div style="float:right">
- <a href="#Todo">Todo</a> - <a href="#GkmClient">GkmClient</a>  - <a href="#Gkm">Gkm</a>
+ <a href="https://github.com/geokrety/geokrety-website/issues/328">#328 consistency</a> - <a href="#Todo">Todo</a> - <a href="#GkmClient">GkmClient</a>  - <a href="#Gkm">Gkm</a>
 </div>
 
 <h2>Done tasks</h2>
 <ul>
- <li>initiate GkmClient into a create dedicated repository : https://github.com/GeoKretyMap/php-client</li>
+ <li>initiate GkmClient into a create dedicated repository : <a href="https://github.com/GeoKretyMap/php-client">GeoKretyMap/php-client</a></li>
  <li>create unit tests (mock http client?)</li>
 </ul>
 
-<h2>Todo or pending tasks</h2>
+<h2 id="Todo">Todo or pending tasks</h2>
 <ul>
  <li>WIP - specifications, cf wiki page <a href="https://github.com/geokrety/geokrety-website/wiki/Study-GKMConsistencyDesign">Study-GKMConsistencyDesign</a></li>
  <li>first version that compare geokrety sync</li>
@@ -52,13 +53,10 @@ $gkmConfig = [];
 // $gkmConfig[GkmConsistencyCheck::CONFIG_API_ENDPOINT] = 'https://api.geokretymap.org';
 
 $consistencyCheck = new GkmConsistencyCheck($gkmConfig);
-$runResult = $consistencyCheck->run();
-
-echo objectToHtml($runResult);
-
+$consistencyCheck->run();
 
 ?>
-<h2>GkmClient</h2>
+<h2 id="GkmClient">GkmClient</h2>
 <?php
 
 foreach ($geokrets as &$geokretyId) {
@@ -82,7 +80,7 @@ foreach ($geokrets as &$geokretyId) {
 
 ?>
 
-<h2>Gkm</h2>
+<h2 id="Gkm">Gkm</h2>
 <?php
 
 foreach ($geokrets as &$geokretyId) {

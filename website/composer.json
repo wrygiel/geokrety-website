@@ -8,7 +8,7 @@
     "torann/json-ld": "0.0.14",
     "google/recaptcha": "^1.2",
     "jimdo/prometheus_client_php": "^0.9.1",
-    "geokretymap/php-client": "^0.0.2"
+    "geokretymap/php-client": "^0.1.0"
   },
   "autoload": {
     "classmap": [
