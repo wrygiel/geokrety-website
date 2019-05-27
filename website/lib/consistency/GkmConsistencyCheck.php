@@ -12,26 +12,41 @@ use Gkm\Domain\GeokretyNotFoundException;
 class GkmConsistencyCheck {
     const CONFIG_API_ENDPOINT = 'gkm_api_endpoint';
 
+    //~ devCorner
+    private $debugMode = true; // DEV ONLY // TODO // REMOVE ME AND DEPENDENCIES BEFORE SQUASH
 
     //~ config
-    private $apiEndpoint = 'https://api.geokretymap.org';
+    private $apiEndpoint = "https://api.geokretymap.org";
+    private $exportUrl = "https://api.geokrety.org/basex/export/geokrety.xml";
 
+    private $redisHost = "redis";
+    private $redisPort = 6379;
+    private $redisValueTimeToLiveSec= 60;// to customize
+
+    private $rollId = 0;
     private $job = "GKMConsistecyCheck";
-    private $gkm;
+    private $gkm;// gkm api client
+
+    private $redisConnection;
 
     public function __construct($config) {
         $this->initConfig($config, self::CONFIG_API_ENDPOINT, "apiEndpoint");
         $this->gkm = new Gkm();
+        $this->redis = new \Redis();
     }
 
     public function run() {
         $runExecutionTime = new ExecutionTime();
         $runExecutionTime->start();
-
         $executionTime = new ExecutionTime();
 
+        $this->redis->connect($this->redisHost, $this->redisPort);
+        echo "Connection to REDIS $this->redisHost:$this->redisPort successfully<br/>\n";
+
+        $this->downloadLastGkmExportIntoRedis($this->exportUrl);
+
         $batchSize = 50;
-        $batchCount = 10;
+        $batchCount = 1;
 
         for ($i=0;$i<$batchCount;$i++) {
 
@@ -42,19 +57,101 @@ class GkmConsistencyCheck {
 
             echo "$i ) $geokretsCount geokrets<br/>" . $executionTime;
 
-            $executionTime->start();
-            $gkmGeokrets = $this->collectGKMGeokretyBulk($geokrets);
-            $gkmGeokretsCount = count($gkmGeokrets);
-            $executionTime->end();
-
-            echo "$i ) $gkmGeokretsCount gkmGeokrets (Bulk)<br/>" . $executionTime;
-            echo "-<br/>\n";
+            foreach  ($geokrets as $geokrety) {
+                $this->compareGeokretyWithRedis($geokrety);
+            }
 
             // DEBUG // echo $this->objectToHtml($gkmGeokrets);
         }
+
         $runExecutionTime->end();
         echo "---<br/>\n";
-        echo "TOTAL) $batchSize x $batchCount geokrety<br/>" . $runExecutionTime;
+        echo $runExecutionTime;
+//         echo "TOTAL) $batchSize x $batchCount geokrety<br/>" . $runExecutionTime;
+    }
+
+    private function compareGeokretyWithRedis($geokretyObject) {
+        $gkId = $geokretyObject["id"];
+        $gkName = $geokretyObject["nazwa"];
+
+        $redisKey = $this->buildRedisKey($gkId);
+        $gkmObject = $this->redis->get($redisKey);
+        if ($gkId == "44998") {
+            print "gkm object $redisKey :";
+            $this>-objectToHtml($gkmObject);
+        }
+
+        // compare $geokretyObject from database /vs/ $gkmObject (redis cache) from last export
+        if (!isset($gkmObject) || $gkmObject == null) {
+            echo " X $gkId missing on GKM side<br/>\n";
+            return;
+        }
+
+        $gkmName = $gkmObject["name"];
+        if ($gkName != $gkmName) {
+            echo " X $gkId not the same name($gkName) on GKM side($gkmName)<br/>\n";
+            return;
+        }
+        echo " * $gkId OK<br/>\n";
+    }
+
+    private function xmlElementToGeokrety($xmlString) {
+        $xmlGeokret = new \SimpleXMLElement($xmlString);
+        $attributes = $xmlGeokret->attributes();
+        return [
+            "date" => (string) $attributes->date,
+            "missing" => (string) $attributes->missing,
+            "ownername" => (string) $attributes->ownername,
+            "id" => (string) $attributes->id,
+            "dist" => (string) $attributes->dist,
+            "lat" => (float) $attributes->lat,
+            "lon" => (float) $attributes->lon,
+            "owner_id" => (string) $attributes->owner_id,
+            "state" => (string) $attributes->state,
+            "type" => (string) $attributes->type,
+            "last_pos_id" => (string) $attributes->last_pos_id,
+            "last_log_id" => (string) $attributes->last_log_id,
+            "name" => (string) $xmlGeokret,
+        ];
+    }
+
+    private function buildRedisKey($gkId) {
+        $rollId = $this->rollId;
+        return "gkm-roll-$rollId-gkid-$gkId";
+    }
+
+    private function putInRedis($gkId, $geokretyObject) {
+        $redisKey = $this->buildRedisKey($gkId);
+        $this->redis->set($redisKey, $geokretyObject, $this->redisValueTimeToLiveSec);
+    }
+
+    private function downloadLastGkmExportIntoRedis($resourceUrl) {
+        $reader = new \XMLReader();
+        $reader->open($resourceUrl);
+        while ($reader->read()) {
+            if($reader->nodeType == \XMLReader::ELEMENT && $reader->name == 'geokret' ) {
+                // For each node to type "geokret":
+                $geokretXml = $reader->readOuterXml();
+                $geokrety = $this->xmlElementToGeokrety($geokretXml);
+                $gkId = $geokrety["id"];
+                if ($gkId == "44998") {
+                    print_r($this->buildRedisKey($gkId));
+                    print_r($geokrety);
+                }
+                if ($index % 1000 == 0) {
+                    echo " * index $index<br/>\n";
+                }
+                $this->putInRedis($gkId, $geokrety);
+                $index++;
+            }
+            // if ($this->debugMode && $index > 1000) break; // TODO
+        }
+    }
+
+
+    private function downloadLastGkmExport($resourceUrl) {
+        // Since PHP 5.1.0, file_put_contents() supports writing piece-by-piece by passing a stream-handle as the $data parameter:
+        file_put_contents("_______Tmpfile.xml", fopen($resourceUrl, 'r'));
     }
 
     private function collectNextGeokretyToSync($batchSize = 50) { // 30 SOMETIME OK // 50 RESULT IN 503
