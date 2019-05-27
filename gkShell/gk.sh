@@ -361,6 +361,12 @@ run-info() {
   echo "     Grafana      - http://gk:3000/"
   echo "     Geokrety     - http://gk/"
   echo "NB/ you could have to wait a minute while database init."
+
+  echo "TODO to move to base docker image :"
+  echo "- execute 'gk sh' then:"
+  echo "pecl install redis"
+  echo "docker-php-ext-enable redis"
+  echo "service apache2 reload"
 }
 
 command-run-windows() {
