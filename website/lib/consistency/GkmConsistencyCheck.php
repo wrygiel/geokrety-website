@@ -20,6 +20,8 @@ class GkmConsistencyCheck {
     private $job = "GKMConsistencyCheck";
     private $gkm;// gkm api client
 
+    private $currentTimestamp = null;
+
     private $redisConnection;
 
     public function __construct($config) {
@@ -38,29 +40,40 @@ class GkmConsistencyCheck {
         $executionTime->start();
         $this->gkmExportDownloader->run($this->rollId);
         $executionTime->end();
-         echo "-download and put in redis $executionTime <br/>\n";
+        echo "--> download and put in redis $executionTime <br/>\n";
 
+
+        $executionTime->start();
         $batchSize = 50;
-        $batchCount = 1;
+        $batchCount = 10;
+        $endOfTable = false;
+        $geokretyCount = 0;
+        $wrongGeokretyCount = 0;
 
-        for ($i=0;$i<$batchCount;$i++) {
+        for ($i=0;!$endOfTable && $i<$batchCount;$i++) {
 
-            $executionTime->start();
             $geokrets = $this->collectNextGeokretyToSync($batchSize);
             $geokretsCount = count($geokrets);
-            $executionTime->end();
+            $endOfTable = ($geokretsCount == 0);
 
             echo "$i ) $geokretsCount geokrets<br/>" . $executionTime;
 
             foreach  ($geokrets as $geokrety) {
-                $this->compareGeokretyWithRedis($this->rollId, $geokrety);
+                $geokretyCount++;
+                $isValid = $this->compareGeokretyWithRedis($this->rollId, $geokrety);
+                if (!$isValid) {
+                  $wrongGeokretyCount++;
+                }
             }
-
+            flush();
             // DEBUG // echo $this->objectToHtml($gkmGeokrets);
         }
+        $executionTime->end();
+        echo "--> compare $geokretyCount geokrety ($wrongGeokretyCount are invalids) - $executionTime <br/>\n";
+
 
         $runExecutionTime->end();
-        echo "---<br/>\n";
+        echo "---TOTAL---<br/>\n";
         echo $runExecutionTime;
 //         echo "TOTAL) $batchSize x $batchCount geokrety<br/>" . $runExecutionTime;
     }
@@ -76,28 +89,42 @@ class GkmConsistencyCheck {
         // compare $geokretyObject from database /vs/ $gkmObject (redis cache) from last export
         if (!isset($gkmObject) || $gkmObject == null) {
             echo " X $gkId missing on GKM side<br/>\n";
-            return;
+            return false;
         }
 
         if ($gkName != $gkmName) {
             echo " X $gkId not the same name($gkName) on GKM side($gkmName)<br/>\n";
-            return;
+            return false;
         }
         echo " * $gkId OK<br/>\n";
+        return true;
     }
 
     private function collectNextGeokretyToSync($batchSize = 50) { // 30 SOMETIME OK // 50 RESULT IN 503
         $link = GKDB::getLink();
 $sql = <<<EOQUERY
-        SELECT    `id`,`nr`,`nazwa`,`owner`
+        SELECT    `id`,`nr`,`nazwa`,`owner`,`timestamp`
         FROM      `gk-geokrety`
-        ORDER BY timestamp ASC
+        ORDER BY timestamp DESC
         LIMIT $batchSize
 EOQUERY;
-// TODO DESC
+
+        if ($this->currentTimestamp != null) {
+$sql = <<<EOQUERY
+        SELECT    `id`,`nr`,`nazwa`,`owner`,`timestamp`
+        FROM      `gk-geokrety`
+        WHERE timestamp < ?
+        ORDER BY timestamp DESC
+        LIMIT $batchSize
+EOQUERY;
+        }
         echo "$sql<br/>\n";
+
         if (!($stmt = $link->prepare($sql))) {
             throw new \Exception($action.' prepare failed: ('.$this->dblink->errno.') '.$this->dblink->error);
+        }
+        if ($this->currentTimestamp != null && !$stmt->bind_param('s', $this->currentTimestamp)) {
+            throw new \Exception($action.' binding parameters failed: ('.$stmt->errno.') '.$stmt->error);
         }
         if (!$stmt->execute()) {
             throw new \Exception($action.' execute failed: ('.$stmt->errno.') '.$stmt->error);
@@ -112,7 +139,7 @@ EOQUERY;
         }
 
         // associate result vars
-        $stmt->bind_result($gkId, $nr, $nazwa, $owner);
+        $stmt->bind_result($gkId, $nr, $nazwa, $owner, $timestamp);
 
         while ($stmt->fetch()) {
             $geokret = [];
@@ -121,6 +148,8 @@ EOQUERY;
             $geokret["nr"] = $nr;
             $geokret["nazwa"] = $nazwa;
             $geokret["owner"] = $owner;
+            $geokret["timestamp"] = $timestamp;
+            $this->currentTimestamp = $timestamp;
             array_push($geokrets, $geokret);
         }
 
