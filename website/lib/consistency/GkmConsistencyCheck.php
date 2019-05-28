@@ -12,9 +12,6 @@ use Gkm\Domain\GeokretyNotFoundException;
 class GkmConsistencyCheck {
     const CONFIG_API_ENDPOINT = 'gkm_api_endpoint';
 
-    //~ devCorner
-    private $debugMode = true; // DEV ONLY // TODO // REMOVE ME AND DEPENDENCIES BEFORE SQUASH
-
     //~ config
     private $apiEndpoint = "https://api.geokretymap.org";
     private $exportUrl = "https://api.geokrety.org/basex/export/geokrety.xml";
@@ -74,12 +71,8 @@ class GkmConsistencyCheck {
         $gkId = $geokretyObject["id"];
         $gkName = $geokretyObject["nazwa"];
 
-        $redisKey = $this->buildRedisKey($gkId);
-        $gkmObject = $this->redis->get($redisKey);
-        if ($gkId == "44998") {
-            print "gkm object $redisKey :";
-            $this>-objectToHtml($gkmObject);
-        }
+        $gkmObject = $this->getFromRedis($gkId);
+        $gkmName = $gkmObject["name"];
 
         // compare $geokretyObject from database /vs/ $gkmObject (redis cache) from last export
         if (!isset($gkmObject) || $gkmObject == null) {
@@ -87,7 +80,6 @@ class GkmConsistencyCheck {
             return;
         }
 
-        $gkmName = $gkmObject["name"];
         if ($gkName != $gkmName) {
             echo " X $gkId not the same name($gkName) on GKM side($gkmName)<br/>\n";
             return;
@@ -120,10 +112,18 @@ class GkmConsistencyCheck {
         return "gkm-roll-$rollId-gkid-$gkId";
     }
 
+    private function getFromRedis($gkId) {
+        $redisKey = $this->buildRedisKey($gkId);
+        $jsonObject = $this->redis->get($redisKey);
+        return json_decode($jsonObject, true);
+    }
+
     private function putInRedis($gkId, $geokretyObject) {
         $redisKey = $this->buildRedisKey($gkId);
-        $this->redis->set($redisKey, $geokretyObject, $this->redisValueTimeToLiveSec);
+        $jsonObject = json_encode($geokretyObject);
+        $this->redis->set($redisKey, $jsonObject, $this->redisValueTimeToLiveSec);
     }
+
 
     private function downloadLastGkmExportIntoRedis($resourceUrl) {
         $reader = new \XMLReader();
@@ -134,10 +134,7 @@ class GkmConsistencyCheck {
                 $geokretXml = $reader->readOuterXml();
                 $geokrety = $this->xmlElementToGeokrety($geokretXml);
                 $gkId = $geokrety["id"];
-                if ($gkId == "44998") {
-                    print_r($this->buildRedisKey($gkId));
-                    print_r($geokrety);
-                }
+
                 if ($index % 1000 == 0) {
                     echo " * index $index<br/>\n";
                 }
@@ -148,11 +145,6 @@ class GkmConsistencyCheck {
         }
     }
 
-
-    private function downloadLastGkmExport($resourceUrl) {
-        // Since PHP 5.1.0, file_put_contents() supports writing piece-by-piece by passing a stream-handle as the $data parameter:
-        file_put_contents("_______Tmpfile.xml", fopen($resourceUrl, 'r'));
-    }
 
     private function collectNextGeokretyToSync($batchSize = 50) { // 30 SOMETIME OK // 50 RESULT IN 503
         $link = GKDB::getLink();
