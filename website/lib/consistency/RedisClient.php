@@ -35,6 +35,14 @@ class RedisClient {
         return $this->link;
     }
 
+    public function get($redisKey) {
+        return $this->link->get($redisKey);
+    }
+
+    public function set($redisKey, $value) {
+        return $this->link->set($redisKey, $value);
+    }
+
     public function getFromRedis($rollId, $gkId) {
         $redisKey = $this->buildRedisKey($rollId, $gkId);
         $jsonObject = $this->link->get($redisKey);

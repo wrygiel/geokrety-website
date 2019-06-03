@@ -6,7 +6,7 @@ namespace Consistency;
  * GkmExportDownloader : download GeoKretyMap export into redis
  */
 class GkmExportDownloader {
-    const CONFIG_GKM_EXPORT_BASIC = 'CONFIG_GKM_EXPORT_BASIC';
+    const CONFIG_GKM_EXPORT_BASIC = 'gkm_export_basic';
     private $exportUrl = "https://api.geokrety.org/basex/export/geokrety.xml";
 
     private $redisValueTimeToLiveSec= 60;// TODO add to config
@@ -20,14 +20,15 @@ class GkmExportDownloader {
     public function run($rollId) {
         $reader = new \XMLReader();
         $reader->open($this->exportUrl);
+        $index = 0;
         while ($reader->read()) {
             if($reader->nodeType == \XMLReader::ELEMENT && $reader->name == 'geokret' ) {
                 // For each node to type "geokret":
                 $geokretXml = $reader->readOuterXml();
                 $geokrety = $this->xmlElementToGeokrety($geokretXml);
                 $gkId = $geokrety["id"];
-                if ($index % 1000 == 0) {
-                    echo " * index $index<br/>\n";
+                if ($index > 0 && $index % 5000 == 0) {
+                    echo " * #$rollId index $index<br/>\n";
                     flush();
                 }
                 $this->redis->putInRedis($rollId, $gkId, $geokrety, $this->redisValueTimeToLiveSec);

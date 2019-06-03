@@ -8,6 +8,8 @@ use Gkm\Domain\GeokretyNotFoundException;
 
 use Consistency\GkmConsistencyCheck;
 
+
+$consistencyEnforce = $_GET["force"];
 $cgeoProbeGeokretyId = 46464;
 $anotherGeokretyId = 69469;
 $unknownGeokretyId = 145454545454545;
@@ -45,12 +47,15 @@ function objectToHtml($var) {
 
 
 
-<h2>GKMConsistencyCheck</h2>
+<h2>GKMConsistencyCheck <a href="?force=true">(force)</a></h2>
 <?php
 
 
 $gkmConfig = [];
 // $gkmConfig[GkmConsistencyCheck::CONFIG_API_ENDPOINT] = 'https://api.geokretymap.org';
+if (isset($consistencyEnforce)) {
+    $gkmConfig[GkmConsistencyCheck::CONFIG_CONSISTENCY_ENFORCE] = $consistencyEnforce;
+}
 
 $consistencyCheck = new GkmConsistencyCheck($gkmConfig);
 $consistencyCheck->run();

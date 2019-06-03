@@ -10,15 +10,19 @@ use Gkm\Domain\GeokretyNotFoundException;
  * GkmConsistencyCheck : analyse consistency between GeoKrety database and GeoKretyMap service
  */
 class GkmConsistencyCheck {
+    const CONFIG_CONSISTENCY_ENFORCE = 'gkm_consistency_enforce';
     const CONFIG_API_ENDPOINT = 'gkm_api_endpoint';
 
     //~ config
     private $apiEndpoint = "https://api.geokretymap.org";
+    private $enforce= false;
 
     //~ private
     private $rollId = 0;
     private $job = "GKMConsistencyCheck";
     private $gkm;// gkm api client
+
+    private $gkmRollIdManager;
 
     private $currentTimestamp = null;
 
@@ -26,9 +30,12 @@ class GkmConsistencyCheck {
 
     public function __construct($config) {
         $this->initConfig($config, self::CONFIG_API_ENDPOINT, "apiEndpoint");
+        $this->initConfig($config, self::CONFIG_CONSISTENCY_ENFORCE, "enforce");
         $this->redis = RedisClient::getInstance($config);
+        $this->redis->connect();
         $this->gkmExportDownloader = new GkmExportDownloader($config);
         $this->gkm = new Gkm();// no more used
+        $this->gkmRollIdManager = new GkmRollIdManager($config);
     }
 
     public function run() {
@@ -36,6 +43,14 @@ class GkmConsistencyCheck {
         $executionTime = new ExecutionTime();
 
         $runExecutionTime->start();
+
+        $this->rollId = $this->gkmRollIdManager->giveMeARollId();
+        if ($this->rollId <= 0 && !$this->enforce) {
+            echo "--> nothing to do";
+            return;
+        } else if ($this->rollId <= 0) {
+            $this->rollId = $this->gkmRollIdManager->enforceARollId();
+        }
 
         $executionTime->start();
         $this->gkmExportDownloader->run($this->rollId);
@@ -76,9 +91,13 @@ class GkmConsistencyCheck {
         echo "---TOTAL---<br/>\n";
         echo $runExecutionTime;
 //         echo "TOTAL) $batchSize x $batchCount geokrety<br/>" . $runExecutionTime;
+
+        $this->gkmRollIdManager->endARollId($this->rollId);
     }
 
+
     private function compareGeokretyWithRedis($rollId, $geokretyObject) {
+        $rollId = $this->rollId;
         $gkId = $geokretyObject["id"];
         $gkName = $geokretyObject["nazwa"];
 
@@ -88,15 +107,15 @@ class GkmConsistencyCheck {
 
         // compare $geokretyObject from database /vs/ $gkmObject (redis cache) from last export
         if (!isset($gkmObject) || $gkmObject == null) {
-            echo " X $gkId missing on GKM side<br/>\n";
+            echo " #$rollId X $gkId missing on GKM side<br/>\n";
             return false;
         }
 
         if ($gkName != $gkmName) {
-            echo " X $gkId not the same name($gkName) on GKM side($gkmName)<br/>\n";
+            echo " #$rollId X $gkId not the same name($gkName) on GKM side($gkmName)<br/>\n";
             return false;
         }
-        echo " * $gkId OK<br/>\n";
+        // DEBUG // echo " #$rollId * $gkId OK<br/>\n";
         return true;
     }
 
@@ -118,7 +137,7 @@ $sql = <<<EOQUERY
         LIMIT $batchSize
 EOQUERY;
         }
-        echo "$sql<br/>\n";
+        // DEBUG // echo "$sql<br/>\n";
 
         if (!($stmt = $link->prepare($sql))) {
             throw new \Exception($action.' prepare failed: ('.$this->dblink->errno.') '.$this->dblink->error);
