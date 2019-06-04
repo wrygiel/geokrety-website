@@ -1,6 +1,8 @@
 <?php
-
-require_once '../common.php';
+// ------------------------
+// Modern :: Wallson (beta)
+// ------------------------
+require_once 'common.php';
 
 $imgname = "$kret_szablon/geokret_label_v1.png";
 $img = imagecreatefrompng($imgname); /* Attempt to open */

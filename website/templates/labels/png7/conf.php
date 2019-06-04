@@ -1,6 +1,8 @@
 <?php
-
-require_once '../common.php';
+// ------------------------
+// Key chain vertical + QR
+// ------------------------
+require_once 'common.php';
 
 $imgname = "$kret_szablon/geokret_label.png";
 $img = imagecreatefrompng($imgname);

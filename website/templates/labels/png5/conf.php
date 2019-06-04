@@ -1,6 +1,9 @@
 <?php
+// ------------------------
+// Modern :: Wallson 2 (with QR)
+// ------------------------
 
-require_once '../common.php';
+require_once 'common.php';
 
 $imgname = "$kret_szablon/geokret_label_v2.png";
 $img = imagecreatefrompng($imgname);
