@@ -24,7 +24,7 @@ class GkmConsistencyCheck {
 
     private $gkmRollIdManager;
 
-    private $currentTimestamp = null;
+    private $currentId = null;
 
     private $redisConnection;
 
@@ -100,10 +100,14 @@ class GkmConsistencyCheck {
         $rollId = $this->rollId;
         $gkId = $geokretyObject["id"];
         $gkName = $geokretyObject["nazwa"];
+        $gkOwnerId = $geokretyObject["owner"];
+        $gkDistanceKm = $geokretyObject["droga"];
 
 
         $gkmObject = $this->redis->getFromRedis($rollId, $gkId);
         $gkmName = $gkmObject["name"];
+        $gkmOwnerId = $gkmObject["owner_id"];
+        $gkmDistanceKm = $gkmObject["dist"];
 
         // compare $geokretyObject from database /vs/ $gkmObject (redis cache) from last export
         if (!isset($gkmObject) || $gkmObject == null) {
@@ -115,34 +119,39 @@ class GkmConsistencyCheck {
             echo " #$rollId X $gkId not the same name($gkName) on GKM side($gkmName)<br/>\n";
             return false;
         }
+
+        if ($gkOwnerId != $gkmOwnerId) {
+            echo " #$rollId X $gkId not the same owner id($gkOwnerId) on GKM side($gkmOwnerId)<br/>\n";
+            return false;
+        }
+
+        if ($gkDistanceKm != $gkmDistanceKm) {
+            echo " #$rollId X $gkId not the same distance traveled($gkDistanceKm) on GKM side($gkmDistanceKm)<br/>\n";
+            return false;
+        }
         // DEBUG // echo " #$rollId * $gkId OK<br/>\n";
         return true;
     }
 
     private function collectNextGeokretyToSync($batchSize = 50) { // 30 SOMETIME OK // 50 RESULT IN 503
-        $link = GKDB::getLink();
-$sql = <<<EOQUERY
-        SELECT    `id`,`nr`,`nazwa`,`owner`,`timestamp`
-        FROM      `gk-geokrety`
-        ORDER BY timestamp DESC
-        LIMIT $batchSize
-EOQUERY;
-
-        if ($this->currentTimestamp != null) {
-$sql = <<<EOQUERY
-        SELECT    `id`,`nr`,`nazwa`,`owner`,`timestamp`
-        FROM      `gk-geokrety`
-        WHERE timestamp < ?
-        ORDER BY timestamp DESC
-        LIMIT $batchSize
-EOQUERY;
+        $link = GKDB::getLink($this->config);
+        $where = "";
+        if ($this->currentId != null) {
+            $where = "WHERE `id` > ?";
         }
-        // DEBUG // echo "$sql<br/>\n";
+$sql = <<<EOQUERY
+        SELECT    `id`,`nazwa`,`owner`,`droga`
+        FROM      `gk-geokrety`
+        $where
+        ORDER BY id ASC
+        LIMIT $batchSize
+EOQUERY;
+        // DEBUG // echo "$sql - id:$this->currentId<br/>\n";
 
         if (!($stmt = $link->prepare($sql))) {
             throw new \Exception($action.' prepare failed: ('.$this->dblink->errno.') '.$this->dblink->error);
         }
-        if ($this->currentTimestamp != null && !$stmt->bind_param('s', $this->currentTimestamp)) {
+        if ($this->currentId != null && !$stmt->bind_param('i', $this->currentId)) {
             throw new \Exception($action.' binding parameters failed: ('.$stmt->errno.') '.$stmt->error);
         }
         if (!$stmt->execute()) {
@@ -158,17 +167,16 @@ EOQUERY;
         }
 
         // associate result vars
-        $stmt->bind_result($gkId, $nr, $nazwa, $owner, $timestamp);
+        $stmt->bind_result($gkId, $nazwa, $owner, $droga);
 
         while ($stmt->fetch()) {
             $geokret = [];
             // DEBUG // echo "$gkId<br/>\n";
             $geokret["id"] = $gkId;
-            $geokret["nr"] = $nr;
             $geokret["nazwa"] = $nazwa;
             $geokret["owner"] = $owner;
-            $geokret["timestamp"] = $timestamp;
-            $this->currentTimestamp = $timestamp;
+            $geokret["droga"] = $droga;
+            $this->currentId = $gkId;
             array_push($geokrets, $geokret);
         }
 
