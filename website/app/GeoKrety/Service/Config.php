@@ -52,7 +52,9 @@ class Config {
         define('GK_SMTP_PASSWORD', $_ENV['GK_SMTP_PASSWORD'] ?? '');
 
         // HASHING seeds
-        define('GK_PASSWORD_HASH_ROTATION', $_ENV['GK_PASSWORD_HASH_ROTATION'] ?? 8);
+        define('GK_PASSWORD_MIN_HASH_ROTATION', $_ENV['GK_PASSWORD_MIN_HASH_ROTATION'] ?? 10);
+        define('GK_PASSWORD_MAX_HASH_ROTATION', $_ENV['GK_PASSWORD_MAX_HASH_ROTATION'] ?? 99);
+        define('GK_PASSWORD_HASH_ROTATION', $_ENV['GK_PASSWORD_HASH_ROTATION'] ?? 11);
         define('GK_PASSWORD_HASH', $_ENV['GK_PASSWORD_HASH'] ?? 'geokrety');
         define('GK_PASSWORD_SEED', $_ENV['GK_PASSWORD_SEED'] ?? 'rand_string');
 
