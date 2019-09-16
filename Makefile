@@ -2,6 +2,14 @@
 GIT_COMMIT := $(shell git rev-parse --short HEAD)
 
 
+startlocal:
+	docker-compose -f docker-compose.local.yml up -d
+stoplocal:
+	docker-compose -f docker-compose.local.yml down
+compose:
+	composer 2>/dev/null 1>&2 || { echo "composer is required : composer install guide at https://getcomposer.org"; exit 1; }
+	cd website/ && composer install && cd .. && composer install
+
 buildboly38:
 	docker-compose -f docker-compose.boly38.yml build --build-arg GIT_COMMIT=$(GIT_COMMIT) geokrety-boly38
 
