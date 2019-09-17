@@ -22,7 +22,10 @@ vars/
 # please use 'composer install' to generate vendor/
 vendor/
 
+# mapped data directories
 db_data/
+website/templates/
+
 
 execution.log
 website/templates/htmlpurifier/library/HTMLPurifier/DefinitionCache/Serializer/HTML/*.ser
