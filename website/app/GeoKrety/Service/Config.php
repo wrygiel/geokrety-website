@@ -208,6 +208,7 @@ class Config {
         if (GK_PASSWORD_HASH_ROTATION > 5) {
             array_push($details, 'GK_PASSWORD_HASH_ROTATION must be greater than 5');
         }
+
         return $details;
     }
 }

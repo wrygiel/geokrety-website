@@ -16,7 +16,7 @@ class HealthCheck extends Base {
             $configValidationDetails = $websiteConfig->validationDetails();
         }
 
-        $isDbOk = $f3->get('DB') !== FALSE;
+        $isDbOk = $f3->get('DB') !== false;
 
         //~ update state
         $state->setDependencyState('config', $isConfigOk ? HealthState::STATE_OK : HealthState::STATE_KO, $configValidationDetails);
@@ -24,7 +24,7 @@ class HealthCheck extends Base {
 
         //~ produce response
         if (!$state->isOk()) {
-           http_response_code(503);
+            http_response_code(503);
         }
         echo json_encode($state);
     }
