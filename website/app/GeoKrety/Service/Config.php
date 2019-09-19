@@ -207,8 +207,11 @@ class Config {
 
     public function validationDetails() {
         $details = [];
-        if (GK_PASSWORD_HASH_ROTATION > 5) {
-            array_push($details, 'GK_PASSWORD_HASH_ROTATION must be greater than 5');
+        if (GK_PASSWORD_HASH_ROTATION > GK_PASSWORD_MAX_HASH_ROTATION) {
+            array_push($details, 'GK_PASSWORD_HASH_ROTATION must be less than '.GK_PASSWORD_MAX_HASH_ROTATION);
+        }
+        if (GK_PASSWORD_HASH_ROTATION < GK_PASSWORD_MIN_HASH_ROTATION) {
+            array_push($details, 'GK_PASSWORD_HASH_ROTATION must be greater than '.GK_PASSWORD_MIN_HASH_ROTATION);
         }
 
         return $details;
