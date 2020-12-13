@@ -39,7 +39,7 @@ Check Move
     Table Cell Should Contain               ${table}    ${row + 1}    4    ${comment}
     Table Cell Should Contain               ${table}    ${row + 1}    5    ${author}
 
-    Run Keyword If      ${move.move_type} in @{REQUIRE_COORDINATES}     Table Cell Should Contain    ${table}    ${row + 1}    6    ${distance} km
+    Run Keyword If      ${move.move_type} in @{REQUIRE_COORDINATES}     Table Cell Should Contain    ${table}    ${row + 1}    6    ${distance} km
     ...                 ELSE                                            Table Cell Should Contain    ${table}    ${row + 1}    6    ${EMPTY}
 
 
@@ -64,7 +64,7 @@ Check GeoKrety Owned
     Table Cell Should Contain               ${USER_OWNED_GEOKRETY_TABLE}    ${row + 1}    3    ${move.waypoint}
     # TODO check last move type icon
     Table Cell Should Contain               ${USER_OWNED_GEOKRETY_TABLE}    ${row + 1}    4    ${last_mover.name}
-    Table Cell Should Contain               ${USER_OWNED_GEOKRETY_TABLE}    ${row + 1}    5    ${distance} km
+    Table Cell Should Contain               ${USER_OWNED_GEOKRETY_TABLE}    ${row + 1}    5    ${distance} km
     Table Cell Should Contain               ${USER_OWNED_GEOKRETY_TABLE}    ${row + 1}    6    ${caches}
 
 
@@ -77,7 +77,7 @@ Check GeoKrety Inventory
     Table Cell Should Contain               ${USER_INVENTORY_TABLE}    ${row + 1}    3    ${owner.name}
     Table Cell Should Contain               ${USER_INVENTORY_TABLE}    ${row + 1}    4    ${last_mover.name}
     # TODO check last move type icon
-    Table Cell Should Contain               ${USER_INVENTORY_TABLE}    ${row + 1}    5    ${distance} km
+    Table Cell Should Contain               ${USER_INVENTORY_TABLE}    ${row + 1}    5    ${distance} km
     Table Cell Should Contain               ${USER_INVENTORY_TABLE}    ${row + 1}    6    ${caches}
 
 
@@ -105,4 +105,4 @@ Check Search By Waypoint
     Table Cell Should Contain               ${SEARCH_BY_WAYPOINT_TABLE}    ${row + 1}    3    ${move.waypoint}
     Table Cell Should Contain               ${SEARCH_BY_WAYPOINT_TABLE}    ${row + 1}    4    ${move.comment}
     # Table Cell Should Contain               ${SEARCH_BY_WAYPOINT_TABLE}    ${row + 1}    5    <datetime>
-    Table Cell Should Contain               ${SEARCH_BY_WAYPOINT_TABLE}    ${row + 1}    6    ${distance} km
+    Table Cell Should Contain               ${SEARCH_BY_WAYPOINT_TABLE}    ${row + 1}    6    ${distance} km
